@@ -11,30 +11,31 @@ def get_client():
         client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     return client
 
-SYSTEM_PROMPT = """Você é um parser financeiro. Extraia informações de gastos de mensagens em português informal.
-
-Retorne SOMENTE um JSON válido com estes campos:
-{
-  "valor": número (float, obrigatório),
-  "descricao": "string curta descrevendo o gasto",
-  "categoria": "uma de: Mercado, Alimentação, Transporte, Saúde, Lazer, Contas, Roupas, Outros",
-  "meio": "uma de: Débito, PIX, Dinheiro, Crédito à vista, Crédito parcelado",
-  "parcelas": número inteiro (1 se não parcelado)
-}
-Se não conseguir identificar o valor, retorne null.
-Não inclua markdown, texto adicional ou explicações. Apenas o JSON."""
-
 def parse_gasto(texto: str, quem: str) -> dict | None:
     try:
+        prompt = f"""Extraia dados deste gasto em portugues: "{texto}"
+
+Retorne SOMENTE JSON valido assim:
+{{"valor": 50.0, "descricao": "mercado", "categoria": "Mercado", "meio": "Debito", "parcelas": 1}}
+
+Categorias: Mercado, Alimentacao, Transporte, Saude, Lazer, Contas, Roupas, Outros
+Meios: Debito, PIX, Dinheiro, Credito a vista, Credito parcelado
+Se nao identificar valor, retorne: null"""
+
         response = get_client().messages.create(
             model="claude-haiku-4-5",
             max_tokens=256,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": texto}]
+            messages=[{"role": "user", "content": prompt}]
         )
         raw = response.content[0].text.strip()
-        data = json.loads(raw)
-        if data is None or "valor" not in data or data["valor"] is None:
+        if not raw or raw == "null":
+            return None
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        data = json.loads(raw.strip())
+        if not data or "valor" not in data or not data["valor"]:
             return None
         data["quem"] = quem
         data["timestamp"] = datetime.now().isoformat()

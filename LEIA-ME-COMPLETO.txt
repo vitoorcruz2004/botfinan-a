@@ -1,0 +1,207 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  FINANÇAS DO CASAL — GUIA COMPLETO DE CONFIGURAÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ARQUIVOS ENTREGUES:
+  financas-casal.html   → app para abrir no celular/navegador
+  apps_script.gs        → cola na planilha Google (coração do sistema)
+  bot_telegram/
+    bot.py              → bot principal
+    parser_gasto.py     → interpretador de linguagem natural
+    sheets.py           → integração com Google Sheets
+    requirements.txt    → dependências Python
+
+O FLUXO É ASSIM:
+  App HTML  ──┐
+              ├──▶  apps_script.gs  ──▶  Google Sheets (planilha única)
+  Bot Telegram ──┘
+
+  Tudo vai para o mesmo lugar. Você vê tudo junto.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PARTE 1 — PLANILHA GOOGLE (obrigatório para os dois)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASSO 1 — Criar a planilha
+  1. Acesse sheets.google.com
+  2. Crie uma planilha nova
+  3. Nomeie como "Finanças do Casal"
+  4. Guarde o ID da planilha — está na URL entre /d/ e /edit
+     Exemplo: docs.google.com/spreadsheets/d/SEU_ID_AQUI/edit
+                                              ↑ isso aqui
+
+PASSO 2 — Instalar o Apps Script
+  1. Na planilha: Extensões → Apps Script
+  2. Apague todo o código que aparecer
+  3. Cole TODO o conteúdo do arquivo apps_script.gs
+  4. Salve (Ctrl+S)
+  5. Na barra de funções, selecione "setupPlanilha" e clique ▶ Executar
+     → Isso cria automaticamente as abas: Gastos, Fixas, Orcamento e Resumo
+  6. Implante o script como app da web:
+     Implantar → Nova implantação → tipo: Aplicativo da Web
+       - Executar como: Eu
+       - Quem tem acesso: Qualquer pessoa
+     Clique Implantar → COPIE a URL gerada (vai precisar nos próximos passos)
+     
+     A URL é parecida com:
+     https://script.google.com/macros/s/XXXXXXXX/exec
+
+PASSO 3 — Cadastrar contas fixas (opcional mas recomendado)
+  Na aba "Fixas" da planilha, preencha assim:
+  
+  Nome        | Valor  | Dia vencimento | Categoria
+  Aluguel     | 1500   | 5              | Moradia
+  Internet    | 120    | 10             | Contas
+  Academia    | 80     | 1              | Saude
+  
+  O sistema desconta automaticamente do saldo disponível.
+  Já vem com 3 exemplos — edite ou apague conforme sua realidade.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PARTE 2 — APP HTML (o mais simples, começa aqui)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Não precisa instalar nada. Só abrir o arquivo.
+
+PASSO 4 — Configurar o app
+  1. Abra o arquivo financas-casal.html no navegador do celular
+     (mande por WhatsApp, Google Drive, ou abra direto)
+  2. Vá na aba "Config" (última aba)
+  3. Cole a URL do Apps Script do Passo 2
+  4. Defina o orçamento mensal (ex: 3000)
+  5. Coloque o seu nome no campo "Seu nome"
+  6. Clique "Testar conexão" — deve aparecer "conexão OK! ✓"
+  
+  ELA faz o mesmo no celular dela, com o nome dela.
+
+PRONTO — o app já funciona!
+
+O QUE O APP FAZ:
+  • Lançar → registra gasto na planilha em tempo real
+  • Saldo  → mostra disponível, contas fixas, barra de progresso
+  • Gráficos → por categoria e por pessoa (app + bot juntos)
+  • Histórico → todos os gastos do mês (identifica se veio do app ou bot)
+  • Config → URL, orçamento, nome, análise com IA
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PARTE 3 — BOT DO TELEGRAM (opcional, mas recomendado)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASSO 5 — Criar o bot no Telegram
+  1. Abra o @BotFather no Telegram
+  2. Mande /newbot
+  3. Escolha um nome (ex: Finanças do Casal) e um username
+  4. Guarde o TOKEN gerado (ex: 123456:ABC-DEF...)
+
+PASSO 6 — Pegar os IDs do Telegram (você e ela)
+  1. Mande uma mensagem para @userinfobot
+  2. Guarde o número "id" retornado
+  3. Ela faz o mesmo no celular dela
+  Resultado: dois números, ex: 123456789 e 987654321
+
+PASSO 7 — Criar credenciais Google (para o bot acessar a planilha)
+  1. Acesse console.cloud.google.com
+  2. Crie um projeto (pode chamar de "finbot")
+  3. APIs e Serviços → Ativar APIs → busque "Google Sheets API" → Ativar
+  4. Credenciais → Criar credenciais → Conta de serviço
+     - Nome: finbot
+     - Clique em Criar e continuar → Concluir
+  5. Na lista de contas de serviço, clique na que acabou de criar
+  6. Aba "Chaves" → Adicionar chave → Criar nova chave → JSON → Criar
+     Um arquivo .json será baixado — guarde-o
+  7. Abra a planilha → Compartilhar
+     Cole o email da conta de serviço (está dentro do JSON como "client_email")
+     Dê acesso de Editor → Confirmar
+
+PASSO 8 — Subir o bot no Railway
+  1. Acesse railway.app → crie conta (pode usar GitHub)
+  2. New Project → Deploy from GitHub
+     Suba os 4 arquivos da pasta bot_telegram/ em um repositório GitHub
+     (bot.py, parser_gasto.py, sheets.py, requirements.txt)
+  3. Em Variables, adicione estas 5 variáveis:
+
+     Nome                     | Valor
+     ─────────────────────────┼──────────────────────────────
+     TELEGRAM_TOKEN           | token do BotFather (Passo 5)
+     ANTHROPIC_API_KEY        | chave em console.anthropic.com
+     SPREADSHEET_ID           | ID da planilha (Passo 1)
+     GOOGLE_CREDENTIALS_JSON  | cole TODO o conteúdo do .json (Passo 7)
+     ALLOWED_IDS              | ex: 123456789,987654321 (Passo 6)
+
+  4. Settings → Start Command: python bot.py
+  5. Deploy!
+
+PASSO 9 — Habilitar análise com IA no Apps Script (para o app HTML)
+  1. No Apps Script: Configurações do projeto (ícone ⚙️)
+  2. Propriedades do script → Adicionar propriedade:
+     Nome: ANTHROPIC_API_KEY
+     Valor: sua chave da Anthropic
+  3. Salvar
+  (Isso permite o botão "Gerar análise com IA" no app HTML funcionar)
+
+PASSO 10 — Resumo semanal automático (opcional)
+  1. No Apps Script: Gatilhos (ícone do relógio) → Adicionar gatilho
+  2. Função: enviarResumoSemanal
+  3. Tipo: Temporizador → Semanal → Domingo → 20h-21h
+  4. No topo do apps_script.gs, preencha as duas variáveis:
+     const TELEGRAM_TOKEN = "seu_token_aqui";
+     const TELEGRAM_CHAT_ID = "id_do_chat_aqui";
+     (Para pegar o CHAT_ID: adicione o bot a um grupo ou converse com ele,
+      depois acesse: api.telegram.org/botSEU_TOKEN/getUpdates)
+  5. Reimplante o script (Implantar → Gerenciar implantações → atualizar)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  COMANDOS DO BOT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Texto livre      → registra o gasto (ex: "gastei 47 no mercado no débito")
+  /start           → boas-vindas, pede orçamento se não definido
+  /limite 3000     → define orçamento mensal
+  /saldo           → disponível com barra de progresso
+  /resumo          → total do mês por categoria e por pessoa
+  /contas          → contas fixas e status de vencimento
+  /historico       → últimos 10 gastos
+  /insight         → análise inteligente do mês com IA
+  /ajuda           → lista todos os comandos
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CUSTO ESTIMADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Google Sheets + Apps Script   → gratuito
+  App HTML                      → gratuito (roda no navegador)
+  Railway (bot)                 → gratuito no Starter / ~$5/mês
+  Anthropic (Claude Haiku)      → ~$0,001 por mensagem ≈ R$0,50/mês
+  Total real                    → R$ 0 a R$ 30/mês
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  RESUMO DA ORDEM DE CONFIGURAÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Etapa 1 (obrigatório, ~10 min):
+    Passo 1 → criar planilha
+    Passo 2 → instalar apps_script.gs
+    Passo 3 → preencher contas fixas
+
+  Etapa 2 (app HTML, ~2 min):
+    Passo 4 → configurar app no celular
+    ✅ Já funciona! Ela já pode usar.
+
+  Etapa 3 (bot Telegram, ~20 min):
+    Passo 5 → criar bot no BotFather
+    Passo 6 → pegar IDs do Telegram
+    Passo 7 → credenciais Google
+    Passo 8 → subir no Railway
+    ✅ Bot funcionando!
+
+  Etapa 4 (extras opcionais):
+    Passo 9  → análise com IA no app HTML
+    Passo 10 → resumo semanal automático
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

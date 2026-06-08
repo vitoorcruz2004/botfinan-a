@@ -3,7 +3,13 @@ import json
 import anthropic
 from datetime import datetime
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+client = None
+
+def get_client():
+    global client
+    if client is None:
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    return client
 
 SYSTEM_PROMPT = """Você é um parser financeiro. Extraia informações de gastos de mensagens em português informal.
 
@@ -15,13 +21,12 @@ Retorne SOMENTE um JSON válido com estes campos:
   "meio": "uma de: Débito, PIX, Dinheiro, Crédito à vista, Crédito parcelado",
   "parcelas": número inteiro (1 se não parcelado)
 }
-
 Se não conseguir identificar o valor, retorne null.
 Não inclua markdown, texto adicional ou explicações. Apenas o JSON."""
 
 def parse_gasto(texto: str, quem: str) -> dict | None:
     try:
-        response = client.messages.create(
+        response = get_client().messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=256,
             system=SYSTEM_PROMPT,

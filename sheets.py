@@ -155,3 +155,42 @@ def gerar_insight_mensal():
     except Exception as e:
         print(f"Erro insight: {e}")
         return None
+
+
+# ── ZERAR MÊS ATUAL ─────────────────────────────────────────────────────────
+
+def zerar_mes_atual():
+    """Apaga todos os gastos do mês atual via Apps Script"""
+    try:
+        r = requests.post(SCRIPT_URL, json={
+            "tipo": "zerar",
+            "mes": get_mes_atual(),
+        }, timeout=15)
+        d = r.json()
+        return d.get("ok", False)
+    except Exception as e:
+        print(f"Erro ao zerar: {e}")
+        return False
+
+
+# ── RESUMO DO MÊS ANTERIOR ──────────────────────────────────────────────────
+
+def get_resumo_mes_anterior():
+    """Busca resumo do mês anterior para envio automático"""
+    from datetime import date
+    hoje = date.today()
+    if hoje.month == 1:
+        mes = f"{hoje.year - 1}-12"
+    else:
+        mes = f"{hoje.year}-{str(hoje.month - 1).padStart(2, '0')}"
+    # Python nao tem padStart, usar zfill
+    ano = hoje.year if hoje.month > 1 else hoje.year - 1
+    mes_num = hoje.month - 1 if hoje.month > 1 else 12
+    mes = f"{ano}-{str(mes_num).zfill(2)}"
+    try:
+        r = requests.get(SCRIPT_URL, params={"acao": "resumo", "mes": mes}, timeout=10)
+        d = r.json()
+        return d.get("dados") if d.get("ok") else None
+    except Exception as e:
+        print(f"Erro resumo anterior: {e}")
+        return None

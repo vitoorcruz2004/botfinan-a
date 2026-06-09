@@ -15,6 +15,7 @@ from sheets import (
     get_orcamento_categorias,
     get_historico_mes,
     gerar_insight_mensal,
+    zerar_mes_atual,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -65,6 +66,7 @@ async def ajuda(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         "/limite [valor] — definir orçamento mensal\n"
         "/historico — últimos 10 gastos\n"
         "/insight — análise inteligente do mês\n"
+        "/zerar — zerar gastos do mês atual\n"
         "/ajuda — este menu",
         parse_mode="Markdown",
     )
@@ -203,6 +205,29 @@ async def cmd_historico(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(msg, parse_mode="Markdown")
 
 
+async def cmd_zerar(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    if not autorizado(update):
+        return
+    args = ctx.args
+    if not args or args[0].lower() != "confirmar":
+        mes = datetime.now().strftime("%B/%Y")
+        total = get_total_mes()
+        await update.message.reply_text(
+            f"Tem certeza que quer zerar os gastos de {mes}?\n\n"
+            f"Total atual: {fmt(total)}\n\n"
+            f"Para confirmar, mande:\n/zerar confirmar",
+        )
+        return
+    ok = zerar_mes_atual()
+    if ok:
+        await update.message.reply_text(
+            f"Gastos de {datetime.now().strftime('%B/%Y')} zerados! "
+            f"Pode comecar a registrar do zero."
+        )
+    else:
+        await update.message.reply_text("Erro ao zerar. Tenta de novo.")
+
+
 async def cmd_insight(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not autorizado(update):
         return
@@ -330,6 +355,7 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("contas", cmd_contas))
     app.add_handler(CommandHandler("historico", cmd_historico))
     app.add_handler(CommandHandler("insight", cmd_insight))
+    app.add_handler(CommandHandler("zerar", cmd_zerar))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     print("Bot rodando com todas as features...")
     app.run_polling()

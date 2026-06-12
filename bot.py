@@ -249,10 +249,6 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     texto = update.message.text
     texto_lower = texto.lower().strip()
 
-    # Ignora mensagens que são comandos (começam com /)
-    if texto.startswith("/"):
-        return
-
     # Ignora palavras reservadas de comandos
     if any(kw in texto_lower for kw in ["zerar", "confirmar"]):
         return
@@ -351,24 +347,7 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 
 if __name__ == "__main__":
-    import sys
-    import time
-    import requests as req_lib
-
     token = os.getenv("TELEGRAM_TOKEN")
-
-    # Limpa sessoes antigas antes de subir
-    try:
-        req_lib.post(
-            f"https://api.telegram.org/bot{token}/getUpdates",
-            json={"offset": -1},
-            timeout=5
-        )
-    except Exception:
-        pass
-
-    time.sleep(3)  # Aguarda instancia anterior morrer
-
     app = ApplicationBuilder().token(token).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("ajuda", ajuda))
@@ -383,4 +362,4 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("zerar", cmd_zerar))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     print("Bot rodando com todas as features...")
-    app.run_polling(drop_pending_updates=True)
+    app.run_polling()

@@ -249,8 +249,12 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     texto = update.message.text
     texto_lower = texto.lower().strip()
 
+    # Log para debug
+    print(f"[handle_message] recebido: {texto[:50]}")
+
     # Ignora qualquer coisa que pareça comando
     if texto_lower.startswith("/"):
+        print(f"[handle_message] ignorando comando: {texto[:50]}")
         return
 
     # Ignora palavras reservadas de comandos

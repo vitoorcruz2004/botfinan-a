@@ -3,33 +3,44 @@ import json
 import anthropic
 from datetime import datetime
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+client = None
 
-SYSTEM_PROMPT = """Você é um parser financeiro. Extraia informações de gastos de mensagens em português informal.
+def get_client():
+    global client
+    if client is None:
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    return client
 
-Retorne SOMENTE um JSON válido com estes campos:
-{
-  "valor": número (float, obrigatório),
-  "descricao": "string curta descrevendo o gasto",
-  "categoria": "uma de: Mercado, Alimentação, Transporte, Saúde, Lazer, Contas, Roupas, Outros",
-  "meio": "uma de: Débito, PIX, Dinheiro, Crédito à vista, Crédito parcelado",
-  "parcelas": número inteiro (1 se não parcelado)
-}
+SYSTEM_PROMPT = """Voce e um parser financeiro. Extraia informacoes de gastos de mensagens em portugues informal.
 
-Se não conseguir identificar o valor, retorne null.
-Não inclua markdown, texto adicional ou explicações. Apenas o JSON."""
+Retorne SOMENTE um JSON valido com estes campos:
+{"valor": numero float obrigatorio, "descricao": "string curta", "categoria": "uma de: Mercado, Alimentacao, Transporte, Saude, Lazer, Contas, Roupas, Outros", "meio": "uma de: Debito, PIX, Dinheiro, Credito a vista, Credito parcelado", "parcelas": numero inteiro 1 se nao parcelado}
+
+Exemplos:
+- "gastei 1786 no itau no credito" -> {"valor": 1786.0, "descricao": "itau", "categoria": "Outros", "meio": "Credito a vista", "parcelas": 1}
+- "comprei tenis por 280 em 3x" -> {"valor": 280.0, "descricao": "tenis", "categoria": "Roupas", "meio": "Credito parcelado", "parcelas": 3}
+- "paguei 47 no mercado no debito" -> {"valor": 47.0, "descricao": "mercado", "categoria": "Mercado", "meio": "Debito", "parcelas": 1}
+
+Se nao conseguir identificar o valor, retorne null.
+Nao inclua markdown, texto adicional ou explicacoes. Apenas o JSON."""
 
 def parse_gasto(texto: str, quem: str) -> dict | None:
     try:
-        response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
+        response = get_client().messages.create(
+            model="claude-haiku-4-5",
             max_tokens=256,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": texto}]
+            messages=[{"role": "user", "content": f"{SYSTEM_PROMPT}\n\nMensagem: {texto}"}]
         )
         raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        raw = raw.strip()
+        if not raw or raw == "null":
+            return None
         data = json.loads(raw)
-        if data is None or "valor" not in data or data["valor"] is None:
+        if not data or "valor" not in data or not data["valor"]:
             return None
         data["quem"] = quem
         data["timestamp"] = datetime.now().isoformat()

@@ -249,6 +249,10 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     texto = update.message.text
     texto_lower = texto.lower().strip()
 
+    # Ignora palavras reservadas de comandos
+    if any(kw in texto_lower for kw in ["zerar", "confirmar"]):
+        return
+
     # Detecta definição de orçamento em texto livre
     for kw in ["limite", "orcamento", "orçamento", "budget", "teto"]:
         if kw in texto_lower:

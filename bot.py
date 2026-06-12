@@ -249,6 +249,10 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     texto = update.message.text
     texto_lower = texto.lower().strip()
 
+    # Ignora mensagens que são comandos (começam com /)
+    if texto.startswith("/"):
+        return
+
     # Ignora palavras reservadas de comandos
     if any(kw in texto_lower for kw in ["zerar", "confirmar"]):
         return

@@ -16,6 +16,8 @@ from sheets import (
     get_historico_mes,
     gerar_insight_mensal,
     zerar_mes_atual,
+    get_parcelas_mes,
+    get_total_parcelas_mes,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -112,7 +114,8 @@ async def cmd_saldo(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     total_gasto = get_total_mes()
     fixas = get_contas_fixas()
     total_fixas = sum(f["valor"] for f in fixas)
-    comprometido = total_gasto + total_fixas
+    total_parcelas = get_total_parcelas_mes()
+    comprometido = total_gasto + total_fixas + total_parcelas
     saldo = limite - comprometido
     pct = min((comprometido / limite) * 100, 100) if limite > 0 else 0
     emoji = "🟢" if pct < 70 else ("🟡" if pct < 90 else "🔴")
@@ -122,6 +125,7 @@ async def cmd_saldo(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         f"Orçamento: {fmt(limite)}\n"
         f"Gastos lançados: {fmt(total_gasto)}\n"
         f"Contas fixas: {fmt(total_fixas)}\n"
+        f"Parcelas do mês: {fmt(total_parcelas)}\n"
         f"Comprometido: {fmt(comprometido)}\n"
         f"{barra_progresso(pct)}\n\n"
         f"*Disponível: {fmt(max(saldo, 0))}*"
@@ -331,7 +335,8 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         total_gasto = get_total_mes()
         fixas = get_contas_fixas()
         total_fixas = sum(f["valor"] for f in fixas)
-        comprometido = total_gasto + total_fixas
+        total_parcelas = get_total_parcelas_mes()
+        comprometido = total_gasto + total_fixas + total_parcelas
         limite = orcamento["total"]
         pct = (comprometido / limite * 100) if limite > 0 else 0
 

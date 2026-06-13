@@ -107,6 +107,72 @@ def get_contas_fixas():
     return _get_remoto("contas") or []
 
 
+
+
+# ── PARCELAS A VENCER ────────────────────────────────────────────────────────
+
+def get_parcelas_mes(mes=None):
+    """
+    Busca todos os gastos parcelados de todos os meses e calcula
+    quais parcelas vencem no mes especificado.
+    Retorna lista de {descricao, valor_parcela, parcela_atual, total_parcelas}
+    """
+    if mes is None:
+        mes = get_mes_atual()
+    
+    try:
+        # Busca historico completo (sem filtro de mes)
+        r = requests.get(SCRIPT_URL, params={"acao": "todos_parcelados"}, timeout=10)
+        d = r.json()
+        if not d.get("ok"):
+            return []
+        
+        gastos_parcelados = d.get("dados", [])
+        parcelas_mes = []
+        
+        from datetime import datetime
+        ano_mes = datetime.strptime(mes, "%Y-%m")
+        
+        for g in gastos_parcelados:
+            try:
+                ts = datetime.fromisoformat(g["timestamp"].replace("Z", ""))
+                n_parcelas = int(g.get("parcelas", 1))
+                if n_parcelas <= 1:
+                    continue
+                
+                valor_parcela = float(g["valor"]) / n_parcelas
+                
+                # Calcular em quais meses as parcelas caem
+                for i in range(n_parcelas):
+                    # Parcela i cai no mes da compra + i meses
+                    mes_parcela_num = ts.month + i
+                    ano_parcela = ts.year + (mes_parcela_num - 1) // 12
+                    mes_parcela_num = ((mes_parcela_num - 1) % 12) + 1
+                    
+                    if ano_parcela == ano_mes.year and mes_parcela_num == ano_mes.month:
+                        parcelas_mes.append({
+                            "descricao": g.get("descricao", ""),
+                            "valor_parcela": valor_parcela,
+                            "parcela_atual": i + 1,
+                            "total_parcelas": n_parcelas,
+                            "quem": g.get("quem", ""),
+                        })
+                        break
+            except Exception as e:
+                print(f"Erro ao calcular parcela: {e}")
+                continue
+        
+        return parcelas_mes
+    except Exception as e:
+        print(f"Erro get_parcelas_mes: {e}")
+        return []
+
+
+def get_total_parcelas_mes(mes=None):
+    """Retorna o total das parcelas que vencem no mes"""
+    parcelas = get_parcelas_mes(mes)
+    return sum(p["valor_parcela"] for p in parcelas)
+
 # ── INSIGHT COM IA ──────────────────────────────────────────────────────────
 
 def gerar_insight_mensal():
